@@ -1,0 +1,60 @@
+{
+ "overhead": {
+  "broker": {
+   "cpu_mean": 0.79,
+   "cpu_max": 1.23,
+   "mem_mean_mb": 8.1,
+   "mem_max_mb": 8.6,
+   "samples": 153
+  },
+  "city": {
+   "cpu_mean": 1.73,
+   "cpu_max": 7.66,
+   "mem_mean_mb": 39.7,
+   "mem_max_mb": 41.5,
+   "samples": 153
+  },
+  "core": {
+   "cpu_mean": 4.02,
+   "cpu_max": 14.17,
+   "mem_mean_mb": 100.2,
+   "mem_max_mb": 155.2,
+   "samples": 153
+  },
+  "emulator": {
+   "cpu_mean": 2.26,
+   "cpu_max": 3.37,
+   "mem_mean_mb": 39.9,
+   "mem_max_mb": 41.3,
+   "samples": 153
+  },
+  "gateway": {
+   "cpu_mean": 3.76,
+   "cpu_max": 17.52,
+   "mem_mean_mb": 44.3,
+   "mem_max_mb": 46.3,
+   "samples": 153
+  },
+  "portal": {
+   "cpu_mean": 0.07,
+   "cpu_max": 0.09,
+   "mem_mean_mb": 34.3,
+   "mem_max_mb": 36.1,
+   "samples": 153
+  },
+  "runner-run": {
+   "cpu_mean": 0.02,
+   "cpu_max": 0.57,
+   "mem_mean_mb": 22.6,
+   "mem_max_mb": 23.6,
+   "samples": 152
+  },
+  "wan": {
+   "cpu_mean": 3.59,
+   "cpu_max": 17.42,
+   "mem_mean_mb": 38.0,
+   "mem_max_mb": 38.8,
+   "samples": 153
+  }
+ }
+}

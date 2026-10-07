@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CivicEdge node</title>
+<style>
+:root{--bg:#0b0f14;--panel:#121820;--line:#1f2a36;--ink:#d7e0ea;--dim:#7d8b9a;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--edge:#38bdf8;--cloud:#fb923c;
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans)}
+header{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line)}
+h1{font:600 16px var(--mono);margin:0;letter-spacing:.02em}
+h1 small{color:var(--dim);font-weight:400;margin-left:8px}
+.tag{font:12px var(--mono);padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.tag.edge{color:var(--edge);border-color:var(--edge)}.tag.cloud{color:var(--cloud);border-color:var(--cloud)}
+.tag.ok{color:var(--ok);border-color:var(--ok)}.tag.bad{color:var(--bad);border-color:var(--bad)}
+.ctl{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select{font:13px var(--mono);background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--dim)}button:disabled{opacity:.5;cursor:default}
+button.danger{border-color:var(--bad);color:var(--bad)}button.go{border-color:var(--ok);color:var(--ok)}
+main{padding:16px 20px 28px;max-width:1500px;margin:0 auto}
+.explain{color:var(--dim);margin:0 0 14px;max-width:110ch}
+.explain b{color:var(--ink);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi .l{color:var(--dim);font-size:12px}
+.kpi .v{font:600 26px var(--mono);margin:2px 0;font-variant-numeric:tabular-nums}
+.kpi .s{color:var(--dim);font-size:12px;min-height:1.4em}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.c4{grid-column:span 4}.c5{grid-column:span 5}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+@media(max-width:1000px){.c4,.c5,.c7,.c8{grid-column:span 12}}
+h2{font:600 13px var(--mono);margin:0 0 4px;letter-spacing:.04em;text-transform:uppercase}
+.sub{color:var(--dim);font-size:12px;margin:0 0 10px}
+table{width:100%;border-collapse:collapse;font:12px var(--mono)}
+th{text-align:left;color:var(--dim);font-weight:400;padding:4px 8px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:4px 8px 4px 0;border-bottom:1px solid #18212b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:22ch}
+.scroll{max-height:330px;overflow:auto}
+.rel{color:var(--ok)}.sup{color:var(--warn)}.pend{color:var(--cloud)}.dim{color:var(--dim)}.hi{color:var(--bad)}
+.bar{display:grid;grid-template-columns:34px 1fr 96px;gap:8px;align-items:center;font:12px var(--mono);margin:6px 0}
+.bar i{display:block;height:10px;border-radius:5px;background:var(--edge);min-width:2px}
+.bar .t{background:#18212b;border-radius:5px}
+.city{display:grid;grid-template-columns:1fr auto;gap:6px 14px;font:13px var(--mono)}
+.city b{font-size:18px;font-variant-numeric:tabular-nums}
+svg{width:100%;height:120px;display:block}
+#verify{margin-top:10px;font:12px var(--mono);color:var(--dim);min-height:1.5em;white-space:normal}
+#login{max-width:460px;margin:12vh auto;padding:0 20px}
+#login input{width:100%;font:14px var(--mono);padding:10px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;margin:10px 0}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div id="login" class="hide">
+  <h1>CivicEdge node</h1>
+  <p class="explain">Enter a resident or operator token. Tokens are in the node's <code>.env</code> file.</p>
+  <input id="tok" type="password" placeholder="token" autocomplete="off">
+  <button class="go" onclick="saveTok()">Open</button>
+  <p id="lerr" class="hi"></p>
+</div>
+
+<div id="app" class="hide">
+<header>
+  <h1>CivicEdge <small>community edge node</small></h1>
+  <span id="role" class="tag"></span>
+  <span id="mode" class="tag"></span>
+  <span id="link" class="tag"></span>
+  <div class="ctl" id="ctl">
+    <button id="bmode" onclick="toggleMode()"></button>
+    <select id="rtt" onchange="demo({rtt:+this.value})" title="WAN round-trip time">
+      <option value="20">WAN 20 ms</option><option value="100">WAN 100 ms</option><option value="300">WAN 300 ms</option>
+    </select>
+    <button id="blink" onclick="toggleLink()"></button>
+  </div>
+</header>
+<main>
+  <p class="explain" id="explain"></p>
+  <div class="kpis">
+    <div class="kpi"><div class="l">Sensor readings ingested</div><div class="v" id="k_in">–</div><div class="s" id="k_in_s"></div></div>
+    <div class="kpi"><div class="l">Alert latency (median, last 30 s)</div><div class="v" id="k_lat">–</div><div class="s" id="k_lat_s"></div></div>
+    <div class="kpi op"><div class="l">Data leaving the node</div><div class="v" id="k_out">–</div><div class="s" id="k_out_s"></div></div>
+    <div class="kpi op"><div class="l">Waiting to be sent upstream</div><div class="v" id="k_q">–</div><div class="s" id="k_q_s"></div></div>
+    <div class="kpi op"><div class="l">Households identifiable at the city</div><div class="v" id="k_hh">–</div><div class="s" id="k_hh_s"></div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card c7">
+      <h2>Alert latency</h2>
+      <p class="sub">Time from the reading that trips a rule to the alert reaching the neighbourhood. Log scale; each dot is one alert.</p>
+      <svg id="chart" viewBox="0 0 700 120" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="card c5">
+      <h2>Air quality by zone</h2>
+      <p class="sub">Mean PM2.5 over the last 60 s. Zones with fewer than 3 sensors are not shown.</p>
+      <div id="zones"></div>
+    </div>
+
+    <div class="card c5">
+      <h2>Local alerts</h2>
+      <p class="sub" id="alsub">Raised on the node.</p>
+      <div class="scroll"><table><thead><tr><th>time</th><th>rule</th><th>zone</th><th>value</th><th>latency</th><th>origin</th></tr></thead><tbody id="alerts"></tbody></table></div>
+    </div>
+    <div class="card c7">
+      <h2>Disclosure ledger</h2>
+      <p class="sub">Every decision to release or withhold data, hash-chained and signed. Residents can read and verify it.</p>
+      <div class="scroll"><table><thead><tr><th>#</th><th>decision</th><th>stream</th><th>purpose</th><th>devices</th><th>bytes</th><th>status</th><th>hash</th></tr></thead><tbody id="ledger"></tbody></table></div>
+      <button class="go" style="margin-top:10px" onclick="verify()">Verify whole ledger</button>
+      <div id="verify"></div>
+    </div>
+
+    <div class="card c12 op">
+      <h2>What the city platform holds</h2>
+      <p class="sub">Read from the upstream recipient over the WAN link. Counters restart when the mode is switched.</p>
+      <div class="city" id="city"></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let T=localStorage.getItem("ce_token")||"", role="", prev=null, G=null, L=null, pts=[], busy=false;
+const u=new URL(location.href);
+if(u.searchParams.get("token")){T=u.searchParams.get("token");localStorage.setItem("ce_token",T);u.searchParams.delete("token");history.replaceState(null,"",u)}
+const api=async(p,o={})=>{const r=await fetch(p,{...o,headers:{Authorization:"Bearer "+T,"Content-Type":"application/json"}});if(!r.ok)throw r.status;return r.json()};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=n=>n>=100?Math.round(n).toLocaleString():n>=10?n.toFixed(1):n.toFixed(2);
+const ms=v=>v>=1000?(v/1000).toFixed(1)+" s":fmt(v)+" ms";
+const hhmmss=t=>new Date(t*1000).toLocaleTimeString([], {hour12:false});
+
+function saveTok(){T=$("tok").value.trim();localStorage.setItem("ce_token",T);start()}
+async function start(){
+  try{role=(await api("/whoami")).role}catch(e){$("login").classList.remove("hide");$("app").classList.add("hide");if(T)$("lerr").textContent="That token was not accepted.";return}
+  $("login").classList.add("hide");$("app").classList.remove("hide");
+  $("role").textContent=role;
+  if(role!=="operator"){document.querySelectorAll(".op").forEach(e=>e.classList.add("hide"));$("ctl").classList.add("hide")}
+  tick();setInterval(tick,2000);
+}
+async function demo(b){busy=true;acc=[];try{await api("/gateway/demo",{method:"POST",body:JSON.stringify(b)})}catch(e){}busy=false;prev=null;tick()}
+function toggleMode(){demo({mode:G&&G.mode==="civicedge"?"cloud":"civicedge"})}
+function toggleLink(){demo({down:!(L&&L.down)})}
+async function verify(){
+  $("verify").textContent="verifying…";
+  try{const v=await api("/ledger/verify");
+    $("verify").innerHTML=v.ok?`<span class="rel">Chain intact.</span> ${v.entries.toLocaleString()} entries, every hash and signature checked in ${v.seconds} s. Head ${esc(v.head.slice(0,24))}…`
+      :`<span class="hi">Tampering detected</span> at entry ${v.first_bad_seq}: ${esc(v.reason)}`}
+  catch(e){$("verify").textContent="could not verify ("+e+")"}
+}
+function chart(){
+  const now=Date.now()/1000, W=700,H=120, span=120, lo=Math.log10(.1), hi=Math.log10(200000);
+  const y=v=>H-6-(Math.log10(Math.max(v,.1))-lo)/(hi-lo)*(H-14), x=t=>W-(now-t)/span*W;
+  let s="";
+  for(const [v,l] of [[1,"1 ms"],[100,"100 ms"],[10000,"10 s"]]) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#1f2a36"/><text x="4" y="${y(v)-3}" fill="#7d8b9a" font-size="9" font-family="monospace">${l}</text>`;
+  for(const p of pts) if(now-p.t<span) s+=`<circle cx="${x(p.t).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2.6" fill="${p.o==="local"?"#38bdf8":"#fb923c"}"/>`;
+  $("chart").innerHTML=s;
+}
+async function tick(){
+  if(busy)return;
+  try{
+    const al=await api("/alerts?last=60"), now=Date.now()/1000;
+    pts=al.map(a=>({t:a.created_ts,v:(a.created_ts-a.trigger_ts)*1000,o:a.origin}));
+    const rec=pts.filter(p=>now-p.t<30).map(p=>p.v).sort((a,b)=>a-b);
+    $("k_lat").textContent=rec.length?ms(rec[rec.length>>1]):"–";
+    $("k_lat_s").textContent=rec.length?`${rec.length} alerts, slowest ${ms(rec[rec.length-1])}`:"no alerts in the last 30 s";
+    $("alerts").innerHTML=al.slice().reverse().slice(0,40).map(a=>`<tr><td class="dim">${hhmmss(a.created_ts)}</td><td>${esc(a.rule.replace(/_/g," "))}</td><td>${esc(a.zone)}</td><td>${fmt(a.value)}</td><td>${ms((a.created_ts-a.trigger_ts)*1000)}</td><td class="${a.origin==="local"?"rel":"pend"}">${a.origin==="local"?"node":"cloud"}</td></tr>`).join("");
+    chart();
+    const z=await api("/zones/summary?kind=air&seconds=60"), mx=Math.max(300,...z.map(g=>g.mean));
+    $("zones").innerHTML=z.map(g=>`<div class="bar"><span>${esc(g.zone)}</span><span class="t"><i style="width:${(g.mean/mx*100).toFixed(1)}%"></i></span><span>${fmt(g.mean)} µg/m³</span></div>`).join("")||'<p class="sub">waiting for data</p>';
+    const le=await api("/ledger?last=40");
+    $("ledger").innerHTML=le.reverse().map(e=>`<tr><td class="dim">${e.seq}</td><td class="${e.decision==="release"?"rel":"sup"}">${e.decision==="release"?"release":"withhold"}</td><td>${esc(e.stream)}</td><td>${esc(e.purpose)}</td><td>${e.n_devices}</td><td>${e.bytes}</td><td class="${e.status==="pending"?"pend":"dim"}">${e.status}</td><td class="dim">${e.entry_hash.slice(0,12)}…</td></tr>`).join("");
+    if(role!=="operator"){$("mode").classList.add("hide");$("link").classList.add("hide");$("explain").innerHTML="You are viewing as a <b>resident</b>: community alerts, zone summaries and the full disclosure ledger. Household alerts and device identities are not shown.";return}
+    const [c,g,l,city]=await Promise.all([api("/stats"),api("/gateway/stats"),api("/gateway/link"),api("/gateway/city")]);
+    G=g;L=l||{down:false,delay_ms:0};
+    const edge=g.mode==="civicedge";
+    $("mode").textContent=edge?"mode: CivicEdge (local-first)":"mode: cloud-centric baseline";$("mode").className="tag "+(edge?"edge":"cloud");
+    $("link").textContent=L.down?"WAN link: DOWN":`WAN link: up, ${Math.round(L.delay_ms*2)} ms`;$("link").className="tag "+(L.down?"bad":"ok");
+    $("bmode").textContent=edge?"Switch to cloud baseline":"Switch to CivicEdge";
+    $("blink").textContent=L.down?"Restore WAN link":"Cut WAN link";$("blink").className=L.down?"go":"danger";
+    $("rtt").value=String(Math.round(L.delay_ms*2));
+    $("explain").innerHTML=edge
+      ?"<b>CivicEdge mode.</b> Rules run on the node, so alerts do not depend on the WAN. Only policy-permitted aggregates and incidents go upstream, and each one is logged in the ledger. Try cutting the WAN link: alerts keep arriving and releases queue until it returns."
+      :"<b>Cloud-centric baseline.</b> Every raw reading is forwarded to the city, which runs the rules and sends alerts back. Alert latency follows the WAN delay, the city sees every device, and alerts stop while the link is down.";
+    $("alsub").textContent=edge?"Raised on the node itself.":"Computed by the city and returned over the WAN.";
+    if(prev){
+      const dt=c.now-prev.c.now; if(dt>0){
+        const rin=(c.readings-prev.c.readings)/dt, bin=(c.bytes_in-prev.c.bytes_in)/dt, bout=(g.out_bytes-prev.g.out_bytes)/dt;
+        acc.push({bin,bout}); if(acc.length>15)acc.shift();
+        const sb=acc.reduce((a,b)=>a+b.bout,0)/acc.length, si=acc.reduce((a,b)=>a+b.bin,0)/acc.length;
+        $("k_in").textContent=fmt(rin)+" /s";$("k_in_s").textContent=`${fmt(si*60/1024)} KiB/min of sensor data`;
+        $("k_out").textContent=fmt(sb*60/1024)+" KiB/min";$("k_out_s").textContent=si>0?`${fmt(sb/si*100)}% of what was ingested (30 s average)`:"";
+      }
+    }
+    prev={c,g};
+    const q=edge?g.pending:Math.max(0,c.raw_head-g.cursor_raw);
+    $("k_q").textContent=q.toLocaleString();$("k_q_s").textContent=edge?"signed releases in the outbox":"raw readings buffered";
+    if(city.reachable){
+      $("k_hh").textContent=city.distinct_households;$("k_hh").style.color=city.distinct_households?"var(--bad)":"var(--ok)";
+      $("k_hh_s").textContent=`${city.distinct_devices} device IDs visible`;
+      $("city").innerHTML=[["Raw sensor readings held",city.raw_records],["Household water readings held",city.personal_records],["Distinct device IDs seen",city.distinct_devices],["Households identifiable",city.distinct_households],["Signed disclosures received and verified",city.disclosures],["Disclosures that failed verification",city.rejected]]
+        .map(([k,v])=>`<span class="dim">${k}</span><b>${Number(v).toLocaleString()}</b>`).join("");
+    }else{$("k_hh").textContent="–";$("k_hh").style.color="";$("k_hh_s").textContent="city unreachable";$("city").innerHTML='<span class="hi">The city platform cannot be reached while the WAN link is down.</span><b></b>'}
+  }catch(e){if(e===401||e===403){localStorage.removeItem("ce_token");location.reload()}}
+}
+let acc=[];
+start();
+</script>
+</body>
+</html>

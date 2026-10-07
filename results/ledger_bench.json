@@ -1,0 +1,34 @@
+{
+ "scaling": [
+  {
+   "entries": 1000,
+   "append_ms_per_entry": 0.8384,
+   "verify_s": 0.1127,
+   "verify_us_per_entry": 112.74,
+   "ok": true
+  },
+  {
+   "entries": 10000,
+   "append_ms_per_entry": 0.5433,
+   "verify_s": 1.1256,
+   "verify_us_per_entry": 112.56,
+   "ok": true
+  },
+  {
+   "entries": 50000,
+   "append_ms_per_entry": 1.2733,
+   "verify_s": 5.9627,
+   "verify_us_per_entry": 119.25,
+   "ok": true
+  }
+ ],
+ "tamper": {
+  "trials_per_kind": 250,
+  "detected": {
+   "modify-field": 250,
+   "delete-entry": 250,
+   "reorder": 250,
+   "forge-resign-wrong-key": 250
+  }
+ }
+}

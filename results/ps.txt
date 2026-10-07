@@ -1,0 +1,9 @@
+NAME                   IMAGE                 COMMAND                  SERVICE    CREATED          STATUS                      PORTS
+civicedge-broker-1     eclipse-mosquitto:2   "/docker-entrypoint.…"   broker     19 minutes ago   Up 19 minutes               1883/tcp
+civicedge-city-1       civicedge:0.1.0       "python -m civicedge…"   city       19 minutes ago   Up 19 minutes               
+civicedge-core-1       civicedge:0.1.0       "python -m civicedge…"   core       19 minutes ago   Up 19 minutes               
+civicedge-emulator-1   civicedge:0.1.0       "python -m civicedge…"   emulator   19 minutes ago   Up 19 minutes               
+civicedge-gateway-1    civicedge:0.1.0       "python -m civicedge…"   gateway    19 minutes ago   Up 19 minutes               
+civicedge-init-1       civicedge:0.1.0       "python -m civicedge…"   init       19 minutes ago   Exited (0) 19 minutes ago   
+civicedge-portal-1     civicedge:0.1.0       "python -m civicedge…"   portal     19 minutes ago   Up 19 minutes               0.0.0.0:8700->8700/tcp
+civicedge-wan-1        civicedge:0.1.0       "python -m civicedge…"   wan        19 minutes ago   Up 19 minutes               

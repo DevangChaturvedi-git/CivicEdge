@@ -1,0 +1,30 @@
+# CivicEdge disclosure policy: "local by default; shared by purpose".
+# Anything not named here never leaves the node (default deny).
+version: 1
+node: civicedge-node-01
+recipient: city-platform
+default: deny
+window_s: 30
+streams:
+  air:
+    purpose: public-health-reporting
+    release: aggregate
+    group_by: zone
+    stats: [mean, max, count]
+    min_devices: 3
+  water:
+    purpose: utility-demand-planning
+    release: aggregate
+    group_by: zone
+    stats: [mean, count]
+    min_devices: 5
+    personal: true
+  # bin telemetry has no entry -> denied; only bin_full incidents leave.
+events:
+  air_exceedance:
+    purpose: emergency-response
+    fields: [zone, severity, value]
+  bin_full:
+    purpose: collection-routing
+    fields: [device, zone]
+  # water_leak has no entry -> stays with the household.

@@ -1,0 +1,4 @@
+init-1  | init ok: 112 broker identities in /certs
+broker-1  | 1791396135: The 'per_listener_settings' option is now deprecated and will be removed in version 3.0. Please see the documentation for how to achieve the same effect.
+broker-1  | 1791396135: Info: running mosquitto as user: mosquitto.
+emulator-1  | emulator: 111 devices at 1.0 Hz

@@ -1,0 +1,97 @@
+# CivicEdge node + a stand-in city platform. Self-contained: it does not
+# modify or depend on any other stack on the host.
+#   docker compose up -d                          run the node
+#   docker compose --profile experiment run --rm runner     run the evaluation
+#   docker compose down -v                        remove everything
+name: civicedge
+
+x-app: &app
+  build: .
+  image: civicedge:0.1.0
+  restart: unless-stopped
+  env_file: .env
+
+services:
+  init:                       # one-shot: TLS material, broker identities, node signing key
+    <<: *app
+    restart: "no"
+    command: python -m civicedge.init /certs
+    environment: {KEY_DIR: /keys, BROKER_UID: "1883"}
+    volumes: [certs:/certs, keys:/keys]
+
+  broker:                     # MQTT over TLS, one identity per device, per-device topic ACL
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    command: mosquitto -c /certs/mosquitto.conf
+    depends_on: {init: {condition: service_completed_successfully}}
+    volumes: [certs:/certs:ro]
+    networks: [field, edge]
+    # ports: ["8883:8883"]    # uncomment to accept real devices from the LAN
+
+  emulator:                   # stands in for physical sensors; replaceable by hardware
+    <<: *app
+    command: python -m civicedge.emulator
+    depends_on: [broker]
+    volumes: [certs:/certs:ro]
+    networks: [field]
+
+  core:                       # ingest, validate, store, rules, alerts. No route off the node.
+    <<: *app
+    command: python -m civicedge.core
+    depends_on: [broker]
+    volumes: [certs:/certs:ro, core-data:/data]
+    networks: [edge]
+
+  gateway:                    # the only egress path: policy + signed ledger + store-and-forward
+    <<: *app
+    command: python -m civicedge.gateway
+    depends_on: {init: {condition: service_completed_successfully}, core: {condition: service_started}}
+    volumes: [keys:/keys:ro, gateway-data:/data]
+    networks: [edge, uplink]
+
+  portal:                     # single published port for residents / operators
+    <<: *app
+    command: python -m civicedge.proxy
+    environment:
+      PORT: "8700"
+      ROUTES: "/ledger=http://gateway:8710,/gateway=http://gateway:8710,/=http://core:8700"
+    ports: ["${PORTAL_BIND:-0.0.0.0}:${PORTAL_PORT:-8700}:8700"]
+    networks: [edge, mgmt]
+
+  wan:                        # WAN link between node and city (delay / jitter / outage injectable)
+    <<: *app
+    command: python -m civicedge.proxy
+    environment: {PORT: "8720", ROUTES: "/=http://city:8730"}
+    networks: [uplink, citynet]
+
+  city:                       # upstream recipient: verifies disclosures, keeps receipts
+    <<: *app
+    command: python -m civicedge.city
+    volumes: [certs:/certs:ro, city-data:/data]
+    networks: [citynet]
+
+  notifier:                   # optional: community alerts into an existing Matrix room
+    <<: *app
+    profiles: [matrix]
+    command: python -m civicedge.notifier
+    networks: [edge, matrix]
+
+  runner:                     # evaluation harness
+    <<: *app
+    profiles: [experiment]
+    restart: "no"
+    command: python -m experiments.run
+    volumes: [./results:/results]
+    networks: [edge, uplink, citynet]
+
+volumes: {certs: {}, keys: {}, core-data: {}, gateway-data: {}, city-data: {}}
+
+networks:
+  field: {internal: true}     # devices <-> broker
+  edge: {internal: true}      # node-internal
+  uplink: {internal: true}    # gateway <-> WAN
+  citynet: {internal: true}   # WAN <-> city
+  mgmt: {}                    # published portal port only
+  matrix:
+    external: true
+    name: ${MATRIX_NETWORK:-homestack_homestack-net}

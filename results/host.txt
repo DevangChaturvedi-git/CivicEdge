@@ -1,0 +1,10 @@
+CPU(s):                                  8
+Model name:                              Intel(R) Core(TM) i3-10100F CPU @ 3.60GHz
+Thread(s) per core:                      2
+CPU(s) scaling MHz:                      95%
+CPU max MHz:                             4300.0000
+               total        used        free      shared  buff/cache   available
+Mem:           12288        5508         116         406        7068        6779
+7.0.2-4-pve
+Docker version 29.5.0, build 98f1464
+Docker Compose version v5.1.3

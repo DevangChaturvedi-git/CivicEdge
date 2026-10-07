@@ -1,0 +1,10 @@
+# Local rules. An alert fires when `field op threshold` holds for
+# `consecutive` readings in a row from one device.
+rules:
+  - {id: air_exceedance, kind: air,   field: pm25,     op: ">", threshold: 250, consecutive: 3, severity: high,   cooldown_s: 10}
+  - {id: water_leak,     kind: water, field: flow_lpm, op: ">", threshold: 25,  consecutive: 3, severity: medium, cooldown_s: 10}
+  - {id: bin_full,       kind: bin,   field: fill_pct, op: ">", threshold: 85,  consecutive: 3, severity: low,    cooldown_s: 10}
+ranges:
+  air:   {pm25: [0, 1000]}
+  water: {flow_lpm: [0, 200]}
+  bin:   {fill_pct: [0, 100]}
